@@ -1,10 +1,11 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../domain/entities/user.dart';
 
 part 'user_dto.freezed.dart';
 part 'user_dto.g.dart';
 
 @freezed
-class UserDto with _$UserDto {
+abstract class UserDto with _$UserDto {
   const factory UserDto({
     required String id,
     required String email,
@@ -13,4 +14,7 @@ class UserDto with _$UserDto {
 
   factory UserDto.fromJson(Map<String, dynamic> json) =>
       _$UserDtoFromJson(json);
+
+  const UserDto._();
+  User toDomain() => User(id: id, email: email, name: name);
 }

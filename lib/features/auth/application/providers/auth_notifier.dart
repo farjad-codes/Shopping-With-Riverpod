@@ -1,48 +1,76 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/legacy.dart';
+
+import '../../data/datasources/remote_auth_datasource.dart';
+import '../../data/repositories/auth_repository_impl.dart';
+import '../../domain/usecases/login_usecase.dart';
+import '../../domain/usecases/signup_usecase.dart';
 import '../../domain/entities/user.dart';
-import '../../domain/repositories/auth_repository.dart';
 
-class AuthState {
-  final bool isLoading;
-  final User? user;
-  final String? error;
+/// --- AuthNotifier ---
+class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
+  final LoginUseCase loginUseCase;
+  final SignupUseCase signupUseCase;
 
-  AuthState({this.isLoading = false, this.user, this.error});
-}
-
-class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository repo;
-
-  AuthNotifier(this.repo) : super(AuthState());
+  AuthNotifier({
+    required this.loginUseCase,
+    required this.signupUseCase,
+  }) : super(const AsyncValue.data(null));
 
   Future<void> login(String email, String password) async {
-    state = AuthState(isLoading: true);
+    state = const AsyncValue.loading();
     try {
-      final (_, user) = await repo.login(email, password);
-      state = AuthState(user: user);
-    } catch (e) {
-      state = AuthState(error: e.toString());
+      final user = await loginUseCase(email, password);
+      state = AsyncValue.data(user);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
     }
   }
 
-  Future<void> signup(String email, String password, String name) async {
-    state = AuthState(isLoading: true);
+  Future<void> signup(String name, String email, String password) async {
+    state = const AsyncValue.loading();
     try {
-      final (_, user) = await repo.signup(email, password, name);
-      state = AuthState(user: user);
-    } catch (e) {
-      state = AuthState(error: e.toString());
+      final user = await signupUseCase(name, email, password);
+      state = AsyncValue.data(user);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
     }
   }
 }
 
-final authNotifierProvider =
-    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  final repo = ref.watch(authRepositoryProvider);
-  return AuthNotifier(repo);
+/// --- Provider wiring ---
+final dioProvider = Provider((ref) {
+  final dio = Dio(BaseOptions(baseUrl: 'https://your.api.url')); // change URL
+  return dio;
 });
 
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  throw UnimplementedError(); // injected from main or provider overrides
+final remoteAuthDataSourceProvider = Provider((ref) {
+  final dio = ref.watch(dioProvider);
+  return RemoteAuthDataSource(dio);
+});
+
+final authRepositoryProvider = Provider((ref) {
+  final remote = ref.watch(remoteAuthDataSourceProvider);
+  return AuthRepositoryImpl(remote);
+});
+
+final loginUseCaseProvider = Provider((ref) {
+  final repo = ref.watch(authRepositoryProvider);
+  return LoginUseCase(repo);
+});
+
+final signupUseCaseProvider = Provider((ref) {
+  final repo = ref.watch(authRepositoryProvider);
+  return SignupUseCase(repo);
+});
+
+final authNotifierProvider =
+    StateNotifierProvider<AuthNotifier, AsyncValue<User?>>((ref) {
+  final loginUseCase = ref.watch(loginUseCaseProvider);
+  final signupUseCase = ref.watch(signupUseCaseProvider);
+  return AuthNotifier(
+    loginUseCase: loginUseCase,
+    signupUseCase: signupUseCase,
+  );
 });

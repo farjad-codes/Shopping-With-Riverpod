@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'features/products/presentation/pages/product_list_page.dart';
+import 'features/auth/presentation/pages/login_page.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -9,11 +9,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Shopping App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.green,
-      ),
-      home: const ProductListPage(), // our starting screen
+      home: const LoginPage(),
     );
   }
 }

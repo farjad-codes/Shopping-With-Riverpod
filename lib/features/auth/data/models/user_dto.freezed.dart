@@ -210,8 +210,8 @@ return $default(_that.id,_that.email,_that.name);case _:
 /// @nodoc
 @JsonSerializable()
 
-class _UserDto implements UserDto {
-  const _UserDto({required this.id, required this.email, required this.name});
+class _UserDto extends UserDto {
+  const _UserDto({required this.id, required this.email, required this.name}): super._();
   factory _UserDto.fromJson(Map<String, dynamic> json) => _$UserDtoFromJson(json);
 
 @override final  String id;

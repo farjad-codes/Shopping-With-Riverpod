@@ -13,4 +13,4 @@ _AuthResponseDto _$AuthResponseDtoFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$AuthResponseDtoToJson(_AuthResponseDto instance) =>
-    <String, dynamic>{'token': instance.token, 'user': instance.user};
+    <String, dynamic>{'token': instance.token, 'user': instance.user.toJson()};
