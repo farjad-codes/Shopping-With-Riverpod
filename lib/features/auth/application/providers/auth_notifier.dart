@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../../../../headers.dart';
 import '../../data/datasources/remote_auth_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/usecases/login_usecase.dart';
@@ -13,10 +14,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   final LoginUseCase loginUseCase;
   final SignupUseCase signupUseCase;
 
-  AuthNotifier({
-    required this.loginUseCase,
-    required this.signupUseCase,
-  }) : super(const AsyncValue.data(null));
+  AuthNotifier({required this.loginUseCase, required this.signupUseCase})
+    : super(const AsyncValue.data(null));
 
   Future<void> login(String email, String password) async {
     state = const AsyncValue.loading();
@@ -37,11 +36,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       state = AsyncValue.error(e, st);
     }
   }
+
+  void setEmail(String value) {}
 }
 
 /// --- Provider wiring ---
 final dioProvider = Provider((ref) {
-  final dio = Dio(BaseOptions(baseUrl: 'https://your.api.url')); // change URL
+  final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
   return dio;
 });
 
@@ -67,10 +68,10 @@ final signupUseCaseProvider = Provider((ref) {
 
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<User?>>((ref) {
-  final loginUseCase = ref.watch(loginUseCaseProvider);
-  final signupUseCase = ref.watch(signupUseCaseProvider);
-  return AuthNotifier(
-    loginUseCase: loginUseCase,
-    signupUseCase: signupUseCase,
-  );
-});
+      final loginUseCase = ref.watch(loginUseCaseProvider);
+      final signupUseCase = ref.watch(signupUseCaseProvider);
+      return AuthNotifier(
+        loginUseCase: loginUseCase,
+        signupUseCase: signupUseCase,
+      );
+    });

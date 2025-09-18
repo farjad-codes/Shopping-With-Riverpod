@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/remote_auth_datasource.dart';
@@ -14,7 +16,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<User> signup(String name, String email, String password) async {
+    log('Signup called in repository');
     final dto = await remote.signup(name, email, password);
+    log('dto: $dto');
     return dto.user.toDomain();
   }
 }

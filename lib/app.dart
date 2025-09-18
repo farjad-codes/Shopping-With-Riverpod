@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'features/auth/presentation/pages/login_page.dart';
+import 'package:shopping_with_riverpod/features/auth/presentation/pages/login_page.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
