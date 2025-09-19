@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../headers.dart';
 import '../../application/providers/auth_notifier.dart';
 
@@ -22,11 +20,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  void _submit() {
+  void _submit() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
-      ref.read(authNotifierProvider.notifier).login(email, password);
+      final success = await ref
+          .read(authNotifierProvider.notifier)
+          .login(email, password);
+      if (!mounted) return; // ✅ check if still in tree
+      if (!success) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Invalid credentials')));
+      }
+      if (success) {
+        context.goNamed(AppRouteNames.home);
+      }
     }
   }
 
@@ -57,17 +66,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
               const SizedBox(height: 24),
               state.when(
-                data: (user) => user != null
-                    ? Text('Welcome ${user.name}')
-                    : ElevatedButton(
-                        onPressed: _submit,
-                        child: const Text('Login'),
-                      ),
+                data: (user) {
+                  if (user != null) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      context.goNamed(AppRouteNames.home);
+                    });
+                  }
+
+                  return user != null
+                      ? Text('Welcome ${user.name}')
+                      : ElevatedButton(
+                          onPressed: _submit,
+                          child: const Text('Login'),
+                        );
+                },
                 loading: () => const CircularProgressIndicator(),
                 error: (e, _) => Text(
                   'Error: $e',
                   style: const TextStyle(color: Colors.red),
                 ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () {
+                  context.goNamed(AppRouteNames.signup);
+                },
+                child: const Text('Create New Account? Sign Up'),
               ),
             ],
           ),

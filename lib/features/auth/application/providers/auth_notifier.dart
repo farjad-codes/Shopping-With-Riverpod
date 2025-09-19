@@ -17,27 +17,35 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   AuthNotifier({required this.loginUseCase, required this.signupUseCase})
     : super(const AsyncValue.data(null));
 
-  Future<void> login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
     state = const AsyncValue.loading();
     try {
       final user = await loginUseCase(email, password);
       state = AsyncValue.data(user);
+      return true;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      return false;
     }
   }
 
-  Future<void> signup(String name, String email, String password) async {
+  Future<bool> signup(String name, String email, String password) async {
     state = const AsyncValue.loading();
     try {
       final user = await signupUseCase(name, email, password);
       state = AsyncValue.data(user);
+      return true;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      return false;
     }
   }
 
   void setEmail(String value) {}
+
+  void logout() {
+    state = const AsyncValue.data(null);
+  }
 }
 
 /// --- Provider wiring ---

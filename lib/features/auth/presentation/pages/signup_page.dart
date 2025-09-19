@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../headers.dart';
 import '../../application/providers/auth_notifier.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
@@ -10,6 +12,7 @@ class SignupPage extends ConsumerStatefulWidget {
 }
 
 class _SignupPageState extends ConsumerState<SignupPage> {
+  final _formKey = GlobalKey<FormState>();
   final _nameCtl = TextEditingController();
   final _emailCtl = TextEditingController();
   final _passCtl = TextEditingController();
@@ -22,54 +25,86 @@ class _SignupPageState extends ConsumerState<SignupPage> {
     super.dispose();
   }
 
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      final name = _nameCtl.text.trim();
+      final email = _emailCtl.text.trim();
+      final pass = _passCtl.text.trim();
+      ref.read(authNotifierProvider.notifier).signup(name, email, pass);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign up')),
+      appBar: AppBar(title: const Text('Sign Up')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: authState.when(
           data: (user) {
             if (user != null) {
-              return Column(
-                children: [
-                  Text('Signed up as ${user.name}'),
-                ],
-              );
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                context.goNamed(AppRouteNames.home);
+              });
             }
 
-            return Column(
-              children: [
-                TextField(controller: _nameCtl, decoration: const InputDecoration(labelText: 'Name')),
-                const SizedBox(height: 8),
-                TextField(controller: _emailCtl, decoration: const InputDecoration(labelText: 'Email')),
-                const SizedBox(height: 8),
-                TextField(controller: _passCtl, decoration: const InputDecoration(labelText: 'Password'), obscureText: true),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    final name = _nameCtl.text.trim();
-                    final email = _emailCtl.text.trim();
-                    final pass = _passCtl.text.trim();
-                    ref.read(authNotifierProvider.notifier).signup(name, email, pass);
-                  },
-                  child: const Text('Sign up'),
-                )
-              ],
+            if (user != null) {
+              return Center(child: Text('Signed up as ${user.name}'));
+            }
+
+            return Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _nameCtl,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                    validator: Validators.validateName,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _emailCtl,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: Validators.validateEmail,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _passCtl,
+                    decoration: const InputDecoration(labelText: 'Password'),
+                    obscureText: true,
+                    validator: Validators.validatePassword,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _submit,
+                    child: const Text('Sign Up'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () {
+                      context.goNamed(AppRouteNames.login);
+                    },
+                    child: const Text('Already have an account? Log in'),
+                  ),
+                ],
+              ),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, st) => Column(
             children: [
-              Text('Error: $e'),
+              Text('Error: $e', style: const TextStyle(color: Colors.red)),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: () {
-                  ref.read(authNotifierProvider.notifier).state = const AsyncValue.data(null);
+                  ref.read(authNotifierProvider.notifier).state =
+                      const AsyncValue.data(null);
                 },
                 child: const Text('Reset'),
-              )
+              ),
             ],
           ),
         ),
