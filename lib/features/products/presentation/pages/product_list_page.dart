@@ -1,6 +1,6 @@
+import 'dart:developer';
+
 import '../../../../headers.dart';
-import '../../../auth/application/providers/auth_notifier.dart'
-    show authNotifierProvider;
 import '../../application/providers/product_providers.dart';
 
 class ProductListPage extends ConsumerWidget {
@@ -8,37 +8,46 @@ class ProductListPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncProducts = ref.watch(productsProvider);
+    final productsAsync = ref.watch(productListProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              ref.read(authNotifierProvider.notifier).logout();
-              context.goNamed(AppRouteNames.onboarding);
-            },
+            onPressed: () => ref.read(refreshProductListProvider)(),
+            icon: const Icon(Icons.refresh),
           ),
         ],
       ),
-      body: asyncProducts.when(
+      body: productsAsync.when(
         data: (products) => ListView.builder(
           itemCount: products.length,
-          itemBuilder: (_, i) => ListTile(
-            title: Text(products[i].name),
-            subtitle: Text('\$${products[i].price}'),
-            onTap: () {
-              context.pushNamed(
-                AppRouteNames.productDetail,
-                pathParameters: {'id': products[i].id.toString()},
-              );
-            },
-          ),
+          itemBuilder: (context, index) {
+            final p = products[index];
+            log('Product: ${p.toJson()}');
+            return ListTile(
+              leading: p.imageUrl != null
+                  ? Image.network(
+                      p.imageUrl!,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                    )
+                  : const Icon(Icons.image),
+              title: Text(p.title ?? 'No Title'),
+              subtitle: Text('\$${p.price?.toStringAsFixed(2) ?? "0.00"}'),
+              onTap: () {
+                context.pushNamed(
+                  AppRouteNames.productDetail,
+                  pathParameters: {'id': products[index].id.toString()},
+                );
+              },
+            );
+          },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error: $err')),
+        error: (err, st) => Center(child: Text('Error: $err')),
       ),
     );
   }
